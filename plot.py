@@ -32,29 +32,32 @@ Time-stamp: <Fri Sep  2 17:11:38 EDT 2011>
 
 import sys, os
 import numpy as np
+import matplotlib
+matplotlib.use('Qt5Agg')
 from matplotlib import dates, pyplot
 
 def main():
     if len(sys.argv) < 2:
         logfilename = 'log.out'         # use default filename
-	print 'No input filename specified: using %s' % logfilename
+        print('No input filename specified: using %s' % logfilename)
     else:
         logfilename = sys.argv[1]
     if not os.path.exists(logfilename):
-        print '%s does not exist!' % logfilename
+        print('%s does not exist!' % logfilename)
         sys.exit()
     else:
-        print 'Reading file %s' % logfilename
+        print('Reading file %s' % logfilename)
     if len(sys.argv) < 3:
         pngfilename = None
-	print 'No output filename specified: will not write output file for plot'
+        print('No output filename specified: will not write output file for plot')
     else:
         pngfilename = sys.argv[2]
-        print 'Plot will be saved as %s' % pngfilename
+        print('Plot will be saved as %s' % pngfilename)
     data = np.genfromtxt(logfilename, usecols = (2, 3, 4, 5))
     t = data[:,0]
     w = data[:,1]
     i = data[:,3]
+    pyplot.figure(0)
     pyplot.plot(t/60,w)
     ax = pyplot.gca()
     ax.set_xlabel('Time (minutes)')
@@ -69,6 +72,7 @@ def main():
     # show the plot
     pyplot.show()
 
+    pyplot.figure(1)
     # cumulative plot
     pyplot.plot(t/60,np.cumsum(w)/1000)
     ax = pyplot.gca()
