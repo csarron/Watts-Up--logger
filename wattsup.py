@@ -9,6 +9,8 @@ Output format will be space sperated containing:
 YYYY-MM-DD HH:MM:SS.ssssss n W V A
 where n is sample number, W is power in watts, V volts, A current in amps
 
+sudo chown $USER /dev/ttyUSB0
+
 Usage: "wattsup.py -h" for options
 
 Author: Kelsey Jordahl
@@ -62,23 +64,26 @@ class WattsUp(object):
     def mode(self, runmode):
         if args.sim:
             return                      # can't set run mode while in simulation
-        self.s.write('#L,W,3,%s,,%d;' % (runmode, self.interval) )
+        cmd = '#L,W,3,%s,,%d;' % (runmode, self.interval)
+        self.s.write(cmd.encode())
         if runmode == INTERNAL_MODE:
-            self.s.write('#O,W,1,%d' % FULLHANDLING)
+            cmd2 = '#O,W,1,%d' % FULLHANDLING
+            self.s.write(cmd2.encode())
 
     def fetch(self):
         if args.sim:
             return                      # can't fetch while in simulation
         for line in self.s:
+            line = line.decode()
             if line.startswith( '#d' ):
                 fields = line.split(',')
                 W = float(fields[3]) / 10;
                 V = float(fields[4]) / 10;
                 A = float(fields[5]) / 1000;
-                print datetime.datetime.now(), W, V, A
+                print(datetime.datetime.now(), W, V, A)
 
     def log(self, logfile = None):
-        print 'Logging...'
+        print('Logging...')
         if not args.sim:
             self.mode(EXTERNAL_MODE)
         if logfile:
@@ -89,9 +94,10 @@ class WattsUp(object):
             try:
                 r = open(rawfile,'w')
             except:
-                print 'Opening raw file %s failed!' % rawfile
+                print('Opening raw file %s failed!' % rawfile)
                 args.raw = False
         line = self.s.readline()
+        line = line.decode()
         n = 0
         # set up curses
         screen = curses.initscr()
@@ -147,6 +153,7 @@ class WattsUp(object):
                         o.write('%s %d %3.1f %3.1f %5.3f\n' % (datetime.datetime.now(), n, W, V, A))
                     n += self.interval
             line = self.s.readline()
+            line = line.decode()
         curses.nocbreak()
         curses.echo()
         curses.endwin()
@@ -169,21 +176,21 @@ def main(args):
             args.port = '/dev/ttyUSB0'
     if not os.path.exists(args.port):
         if not args.sim:
-            print ''
-            print 'Serial port %s does not exist.' % args.port
-            print 'Please make sure FDTI drivers are installed'
-            print ' (http://www.ftdichip.com/Drivers/VCP.htm)'
-            print 'Default ports are /dev/ttyUSB0 for Linux'
-            print ' and /dev/tty.usbserial-A1000wT3 for Mac OS X'
+            print('')
+            print('Serial port %s does not exist.' % args.port)
+            print('Please make sure FDTI drivers are installed')
+            print(' (http://www.ftdichip.com/Drivers/VCP.htm)')
+            print('Default ports are /dev/ttyUSB0 for Linux')
+            print(' and /dev/tty.usbserial-A1000wT3 for Mac OS X')
             exit()
         else:
-            print ''
-            print 'File %s does not exist.' % args.port
+            print('')
+            print('File %s does not exist.' % args.port)
     meter = WattsUp(args.port, args.interval)
     if args.log:
         meter.log(args.outfile)
     if args.fetch:
-        print 'WARNING: Fetch mode not working!!!!'
+        print('WARNING: Fetch mode not working!!!!')
         meter.fetch()
     if args.internal:
         meter.mode(INTERNAL_MODE)
